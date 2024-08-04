@@ -1,2 +1,4 @@
-# crazy-panda
-Tests for Crazy Panda
+# Тестовые задания для Crazy Panda
+
+Пояснения в коде
+
