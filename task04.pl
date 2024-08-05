@@ -28,8 +28,8 @@ my @conncred = ("dbi:SQLite:dbname=panda.sqlite", "", "");
 my $dbh  = DBI->connect(@conncred) and print "Connected, init tables..." or die "wtf?!";
 my $sth;
 while (<DATA>) { # инициализация таблиц БД, если отсутствуют
-    $sth = $dbh->prepare($_) or die "prep failed: ".$dbh->errstr();
-    $sth->execute or die "exec failed: ".$dbh->errstr();
+    $sth = $dbh->prepare($_) or die "prep failed: ", $dbh->errstr();
+    $sth->execute or die "exec failed: ", $dbh->errstr();
 }
 print " done!\nGen data... " and STDOUT->flush;
 
