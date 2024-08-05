@@ -8,8 +8,34 @@ use strict; use warnings; use v5.10;
 переданному в аргументах функции числу.
 Используйте модуль Benchmark, чтобы оценить скорость написанного
 решения и оптимизировать его.
+
 =head1 DESCRIPTION
-Победила реализация на С...
+Реализован бинарный поиск на Perl - binsearch и два на C
+Первый вариант работает непосредственно с Perl-массивом, второму
+требуется предварительная конвертация в родной массив. Это даёт некоторые
+преимущества по скорости, но требует переиниции, если данные менялись
+
+=head1 Результаты тестирования для разных архитектур
+Сравненин проводилось для размера массива 2**20 и 10E6 итераций
+
+=head2 Xeon E5450
+                Rate   binsearch binsearchC1 binsearchC2
+binsearch   128205/s          --        -70%        -76%
+binsearchC1 427350/s        233%          --        -21%
+binsearchC2 540541/s        322%         26%          --
+
+=head2 PowerPC G4 7455
+               Rate   binsearch binsearchC1 binsearchC2
+binsearch   15207/s          --        -73%        -78%
+binsearchC1 56022/s        268%          --        -19%
+binsearchC2 69348/s        356%         24%          --
+
+=head2 ARMv7 msm8960
+               Rate   binsearch binsearchC1 binsearchC2
+binsearch   14896/s          --        -56%        -62%
+binsearchC1 33910/s        128%          --        -13%
+binsearchC2 38835/s        161%         15%          --
+
 =cut
 
 use Benchmark 'cmpthese';
@@ -17,38 +43,32 @@ use File::Basename 'dirname';
 use lib dirname(__FILE__).'/lib';
 use MyApp::Findnear;
 # use MyApp::Findnear:XS;
-use Inline 'C';
 
 use constant {
-    ASIZE   => 2**22,   # размер массива
-    ITNUM   => 1000000,  # количество итераций для измерений
-    REPCOUNT => 5,     # колчичество повтореий с генерацией новых данных
+    ASIZE   => 2**20,   # размер массива
+    ITNUM   => 1000000, # количество итераций для измерений
+    REPCOUNT => 5,      # колчичество повтореий с генерацией новых данных
 };
 
 
 for (1 .. REPCOUNT) {
-    print "prepare array..."; STDOUT->flush;
+    print "prepare array..."; STDOUT->flush;    
     my @arr = sort { $a <=> $b } map { rand } (0 .. ASIZE - 1);
+    arr2c(\@arr); # конвертация для С
     say " done";
-    sv_init(\@arr);
 
-    my $searchin = rand;
+    my $searchin = rand; # значение для поиска
     my (%cmp_h, %res);
     { no warnings 'experimental';
-    for my ($desc, $sub) (@test_subs) {
+    for my ($desc, $sub) (@test_subs) { # добавление функций для бенчмарка
          $cmp_h{$desc} = sub { 
             my $res = $sub->(\@arr, $searchin);
             $res{$searchin}{$res} = $arr[$res];
         }
     }}
 
-    $cmp_h{'binsearchC'} = sub {         
-        my $min = 0;
-        my $max = $#arr;
-        my $res = binarySearch($searchin, $min, $max);
-        $res{$searchin}{$res} = $arr[$res];
-    };
-    cmpthese(ITNUM, \%cmp_h);
+    cmpthese(ITNUM, \%cmp_h); undef @arr;
+
     while (my($kk, $vv) = each %res ) { # функции должны находить одинаковый результат
         if (1 < keys %$vv) {
             my %tmp = map { $vv->{$_}, $_} keys %$vv;
@@ -58,45 +78,3 @@ for (1 .. REPCOUNT) {
 }
 
 exit 0;
-
-__END__
-__C__
-
-double * carray;
-int size = 0;
-
-int sv_init(AV* parray) {
-    if (size > 0 ) free(carray);
-    size = av_len(parray)+1;
-    carray = malloc(size*8);
-    for (int i=0; i<=av_len(parray); i++) {
-        SV** elem = av_fetch(parray, i, 0);
-            if (elem != NULL)
-        carray[i] = SvNV(*elem);
-    }
-    return size;   
-}
-
-int sv_done(AV* parray) {
-    free(carray);
-    size = 0;
-}
-
-double check(int index) {
-    return carray[index];
-}
-
-int binarySearch(double x, int low, int high) {
-  if (size <= 0 ) return(-1);
-  while (high - low > 1) {
-    int mid = low + (high - low) / 2;
-    if (carray[mid] == x)
-      return mid;
-    if (carray[mid] < x)
-      low = mid ;
-    else
-      high = mid;
-  }
-  return (x - carray[low]) <= (carray[high] - x) ? low : high;
-}
-
