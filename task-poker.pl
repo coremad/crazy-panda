@@ -39,24 +39,23 @@ sub deal($) { # простая выдача эн карт
 sub deal_rand($) { # выдача эн случайных карт
     my ($numb, $total, @cards) = (shift, scalar @deck, ());
     die "looks like a scam" if $numb > $total || $numb < 1;
-    push @cards, splice @deck, int rand $total--, 1 for (0 .. $numb - 1);    
-    @cards;
+    @cards = map { splice @deck, int rand $total--, 1 } 1 .. $numb;    
+    
 }
 
-sub deal_snake($) {
+sub deal_snake($) { 
     my ($numb, $total, @cards) = (shift, scalar @deck, ());
     die "looks like a scam" if $numb > $total || $numb < 1;
-    (state $parity ^= 1) ? push @cards, splice @deck, 0, 1 : push @cards, splice @deck, $#deck, 1 while $numb--;
-    @cards;
+    @cards = map{ (state $parity ^= 1) ? splice @deck, 0, 1 : splice @deck, $#deck, 1 } 1..$numb;
 }
 
 gen_deck;
 # split_deck;
-# fisher_yates_shuffle;
+fisher_yates_shuffle;
 
 say "deck before:\n@deck - ", scalar @deck, " total\n";
 
-@gamers = map { [deal_snake($cards)] } 0 .. $gamers - 1;
+@gamers = map { [deal($cards)] } 0 .. $gamers - 1;
 
 @buyin = deal($buyin);
 
@@ -68,10 +67,6 @@ print "gamer$_\t" for 1 .. @gamers; say '';
 for my $ii (0 .. $cards - 1) {
     print "$gamers[$_]->[$ii]\t" for  0 .. $#gamers; say '';
 }
-
-
-my @dw = qw/zero one two three/;
-say $_ < 4 ? $dw[$_] : "too many" for 0 .. 4;
 
 exit 0;
 
