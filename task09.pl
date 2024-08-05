@@ -9,31 +9,29 @@ use strict; use warnings; use v5.10;
 Используйте модуль Benchmark, чтобы оценить скорость написанного
 решения и оптимизировать его.
 =head1 DESCRIPTION
-Функции поиска вынесены в модуль MyApp::Findnear
+Победила реализация на С...
 =cut
 
 use Benchmark 'cmpthese';
 use File::Basename 'dirname';
 use lib dirname(__FILE__).'/lib';
 use MyApp::Findnear;
+# use MyApp::Findnear:XS;
+use Inline 'C';
 
 use constant {
-    ASIZE   => 2**20,   # размер массива
-    ITNUM   => 200,  # количество итераций для измерений
-    REPCOUNT => 10,     # колчичество повтореий с генерацией новых данных
+    ASIZE   => 2**22,   # размер массива
+    ITNUM   => 1000000,  # количество итераций для измерений
+    REPCOUNT => 5,     # колчичество повтореий с генерацией новых данных
 };
 
-use Devel::Size qw(size total_size);
 
 for (1 .. REPCOUNT) {
     print "prepare array..."; STDOUT->flush;
     my @arr = sort { $a <=> $b } map { rand } (0 .. ASIZE - 1);
     say " done";
-    # print "prepare btree..."; STDOUT->flush;
-    # my $searcher = MyApp::Findnear->new(\@arr, 14);
-    # say " done";
-    # say "total_size array: ", total_size(\@arr)/1024/1024;
-    # say "total_size btree: ", total_size($searcher->{btree})/1024/1024;
+    sv_init(\@arr);
+
     my $searchin = rand;
     my (%cmp_h, %res);
     { no warnings 'experimental';
@@ -43,10 +41,13 @@ for (1 .. REPCOUNT) {
             $res{$searchin}{$res} = $arr[$res];
         }
     }}
-    # $cmp_h{'btreesearch'} = sub { 
-    #     my $res = $searcher->btreesearch($searchin);
-    #     $res{$searchin}{$res} = $arr[$res];
-    # };
+
+    $cmp_h{'binsearchC'} = sub {         
+        my $min = 0;
+        my $max = $#arr;
+        my $res = binarySearch($searchin, $min, $max);
+        $res{$searchin}{$res} = $arr[$res];
+    };
     cmpthese(ITNUM, \%cmp_h);
     while (my($kk, $vv) = each %res ) { # функции должны находить одинаковый результат
         if (1 < keys %$vv) {
@@ -57,3 +58,45 @@ for (1 .. REPCOUNT) {
 }
 
 exit 0;
+
+__END__
+__C__
+
+double * carray;
+int size = 0;
+
+int sv_init(AV* parray) {
+    if (size > 0 ) free(carray);
+    size = av_len(parray)+1;
+    carray = malloc(size*8);
+    for (int i=0; i<=av_len(parray); i++) {
+        SV** elem = av_fetch(parray, i, 0);
+            if (elem != NULL)
+        carray[i] = SvNV(*elem);
+    }
+    return size;   
+}
+
+int sv_done(AV* parray) {
+    free(carray);
+    size = 0;
+}
+
+double check(int index) {
+    return carray[index];
+}
+
+int binarySearch(double x, int low, int high) {
+  if (size <= 0 ) return(-1);
+  while (high - low > 1) {
+    int mid = low + (high - low) / 2;
+    if (carray[mid] == x)
+      return mid;
+    if (carray[mid] < x)
+      low = mid ;
+    else
+      high = mid;
+  }
+  return (x - carray[low]) <= (carray[high] - x) ? low : high;
+}
+

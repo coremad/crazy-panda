@@ -6,7 +6,7 @@ our @EXPORT = qw(@test_subs);
 
 our @test_subs; # список функций для тестирования
 
-sub simplesearch ($$) {
+sub simplesearch ($$) { # сравнивать её в бенчмарках нет смысла 
     my ($arr, $num) = @_;
     ref $arr eq 'ARRAY' or die 'arrref needed!';
     return 0 if $num <= $arr->[0]; 
@@ -18,7 +18,7 @@ sub simplesearch ($$) {
     return $#$arr;
 }
 push @EXPORT, 'simplesearch'; 
-push @test_subs, 'simplesearch' => \&simplesearch; 
+# push @test_subs, 'simplesearch' => \&simplesearch; 
 
 sub binsearch ($$) {
     my ( $arr, $num ) = @_;
@@ -37,54 +37,4 @@ sub binsearch ($$) {
 push @EXPORT, 'binsearch'; 
 push @test_subs, 'binsearch' => \&binsearch; 
 
-
-
-use constant {
-    BSIZE => 16,
-};
-
-sub new {
-    my ($class, $arr, $bsize) = @_;
-    ref $arr eq 'ARRAY' or die 'arrref needed!';
-    my $self = { arr => $arr, btree => {} };
-    bless $self, $class;
-    $self->init($bsize);
-    return $self;
-}
-
-sub mkbtree {
-    my ($btree, $depth, $arr, $min, $max) = @_;
-    my $mid = (( $max - $min ) >> 1) + $min;
-    $$btree = { mid => $mid, vmid => $arr->[$mid], left => {}, right => {} };
-    --$depth or return;
-    mkbtree((\$$btree->{left}), $depth, $arr, $min, $mid) if $min < $mid;
-    mkbtree((\$$btree->{right}), $depth, $arr, $mid, $max) if $mid < $max;
-}
-
-sub init {
-    my ($self, $bsize) = (@_);
-    $bsize = $bsize // BSIZE;
-    mkbtree(\$self->{btree}, $bsize, $self->{arr}, 0, $#{$self->{arr}});
-}
-
-sub btreesearch ($$) {
-    my ( $self, $num ) = @_;
-    return 0 if $self->{arr}->[0] >= $num;
-    return $#{$self->{arr}} if $self->{arr}->[$#{$self->{arr}}] <= $num;
-    my $min = 0;
-    my $max = $#{$self->{arr}};
-    my $bpos = \$self->{btree};
-    {
-        if ($num > $$bpos->{vmid} ) { $min = $$bpos->{mid}; $bpos = \$$bpos->{right}}
-        else { $max = $$bpos->{mid} ; $bpos = \$$bpos->{left}};
-        redo if $$bpos->{mid} && ($max - $min  > 1)
-    }
-    while ($max - $min  > 1) {
-        my $mid = (( $max - $min ) >> 1) + $min;
-        $num > $self->{arr}[$mid] and $min = $mid or $max = $mid;
-    }
-    return ($num - $self->{arr}[$min]) <= ($self->{arr}[$max] - $num) ? $min : $max;
-}
-
 1;
-
