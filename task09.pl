@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-use strict; use warnings; use v5.30;
+use strict; use warnings; use v5.10;
 
 =head1 TASK09  Поиск в массиве
 Дан массив из большого числа элементов (числа), отсортированный по
@@ -18,8 +18,8 @@ use lib dirname(__FILE__).'/lib';
 use MyApp::Findnear;
 
 use constant {
-    ASIZE   => 2**23,   # размер массива
-    ITNUM   => 200000,  # количество итераций для измерений
+    ASIZE   => 2**20,   # размер массива
+    ITNUM   => 200,  # количество итераций для измерений
     REPCOUNT => 10,     # колчичество повтореий с генерацией новых данных
 };
 
@@ -29,11 +29,11 @@ for (1 .. REPCOUNT) {
     print "prepare array..."; STDOUT->flush;
     my @arr = sort { $a <=> $b } map { rand } (0 .. ASIZE - 1);
     say " done";
-    print "prepare btree..."; STDOUT->flush;
-    my $searcher = MyApp::Findnear->new(\@arr, 3);
-    say " done";
-    say "total_size array: ", total_size(\@arr)/1024/1024;
-    say "total_size btree: ", total_size($searcher->{btree})/1024/1024;
+    # print "prepare btree..."; STDOUT->flush;
+    # my $searcher = MyApp::Findnear->new(\@arr, 14);
+    # say " done";
+    # say "total_size array: ", total_size(\@arr)/1024/1024;
+    # say "total_size btree: ", total_size($searcher->{btree})/1024/1024;
     my $searchin = rand;
     my (%cmp_h, %res);
     { no warnings 'experimental';
@@ -43,15 +43,15 @@ for (1 .. REPCOUNT) {
             $res{$searchin}{$res} = $arr[$res];
         }
     }}
-    $cmp_h{'btreesearch'} = sub { 
-        my $res = $searcher->btreesearch($searchin);
-        $res{$searchin}{$res} = $arr[$res];
-    };
+    # $cmp_h{'btreesearch'} = sub { 
+    #     my $res = $searcher->btreesearch($searchin);
+    #     $res{$searchin}{$res} = $arr[$res];
+    # };
     cmpthese(ITNUM, \%cmp_h);
     while (my($kk, $vv) = each %res ) { # функции должны находить одинаковый результат
         if (1 < keys %$vv) {
             my %tmp = map { $vv->{$_}, $_} keys %$vv;
-            (1 < keys %tmp ) and say Dumper \%res and die "not equal!"
+            (1 < keys %tmp ) and die "not equal!"
         }
     }
 }

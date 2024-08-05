@@ -1,5 +1,5 @@
 package MyApp::Findnear;
-use strict; use warnings; use v5.30;
+use strict; use warnings; use v5.10;
 use Exporter;
 our @ISA    = qw(Exporter);
 our @EXPORT = qw(@test_subs);
@@ -18,7 +18,7 @@ sub simplesearch ($$) {
     return $#$arr;
 }
 push @EXPORT, 'simplesearch'; 
-# push @test_subs, 'simplesearch' => \&simplesearch; 
+push @test_subs, 'simplesearch' => \&simplesearch; 
 
 sub binsearch ($$) {
     my ( $arr, $num ) = @_;
@@ -38,13 +38,6 @@ push @EXPORT, 'binsearch';
 push @test_subs, 'binsearch' => \&binsearch; 
 
 
-# sub shittest ($$) {
-#     my ( $arr, $num ) = @_;
-#     ref $arr eq 'ARRAY' or die 'arrref needed!';
-#     return int rand $#$arr;
-# }
-# push @EXPORT, 'shittest'; 
-# push @test_subs, 'shittest' => \&shittest; 
 
 use constant {
     BSIZE => 16,

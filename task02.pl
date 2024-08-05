@@ -59,8 +59,10 @@ use lib dirname(__FILE__).'/lib';
     ;
     prop a => b => c => d =>; # свойства 'a' и 'c'
     # prop e => f => h => ; # ошибка, должны быть пары
+    prop $_ => 1 for qw /x y z lamda/;
 }
 
+# использование класса MyClass
 my $acc1 = MyClass->new;
 say "$_\t=> " . ($acc1->$_//'undef') for $acc1->proplist;
 $acc1->test('test kek');
