@@ -24,18 +24,17 @@ binsearch   128205/s          --        -70%        -76%
 binsearchC1 427350/s        233%          --        -21%
 binsearchC2 540541/s        322%         26%          --
 
-=head2 PowerPC G4 7455
+=head2 PowerPC G4 7455, altivec supported
                Rate   binsearch binsearchC1 binsearchC2
 binsearch   15207/s          --        -73%        -78%
 binsearchC1 56022/s        268%          --        -19%
 binsearchC2 69348/s        356%         24%          --
 
-=head2 ARMv7 msm8960
+=head2 ARMv7 msm8960 (swp half thumb fastmult vfp edsp neon vfpv3 tls vfpv4)
                Rate   binsearch binsearchC1 binsearchC2
 binsearch   14896/s          --        -56%        -62%
 binsearchC1 33910/s        128%          --        -13%
 binsearchC2 38835/s        161%         15%          --
-
 =cut
 
 use Benchmark 'cmpthese';
