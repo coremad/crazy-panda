@@ -79,7 +79,7 @@ my $qpar = {
     sleep  => 4,
 };
 
-say http_get_async('slowpoke.madcore.fun', 80, 'path', $qpar, $_) ? 
+say http_get_async('slowpoke.madcore.pro', 80, 'path', $qpar, $_) ? 
     "ok\n": "nothing!\n" for 1 .. 7;
 
 exit 0;
