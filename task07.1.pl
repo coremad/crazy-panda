@@ -67,7 +67,7 @@ my $qpar = {
     sleep  => 4, # задержка сервера перед ответом
 };
 
-say http_get('slowpoke.madcore.fun', 80, 'path', $qpar, $_) ? 
+say http_get('slowpoke.madcore.pro', 80, 'path', $qpar, $_) ? 
     "ok\n": "nothing!\n" for 1 .. 7;
 # say http_get('127.0.0.1', 8080, 'path', $qpar, $_) ? 
 #     "ok\n": "nothing!\n" for 1 .. 7;
